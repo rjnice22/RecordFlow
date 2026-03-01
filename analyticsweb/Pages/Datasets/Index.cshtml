@@ -1,81 +1,70 @@
 ﻿@page
-@model analyticsweb.Pages.Datasets.IndexModel
 @{
-    ViewData["Title"] = "Datasets";
+    ViewData["Title"] = "Home";
+    var isAuthed = User?.Identity?.IsAuthenticated ?? false;
 }
 
-<h1>Datasets</h1>
+<div class="bg-primary text-white rounded-4 p-5 mb-4 shadow-sm">
+    <div class="container-fluid py-3">
+        <h1 class="display-5 fw-bold">RecordFlow</h1>
+        <p class="col-md-8 fs-5">
+            A simple, secure way to create, search, and manage datasets.
+        </p>
 
-<p>
-    Use the search box to find datasets by <strong>Name</strong> or <strong>Description</strong>.
-    <br />
-    Wildcards are allowed using <strong>*</strong>:
-</p>
-<ul>
-    <li><code>roof*</code> = starts with “roof”</li>
-    <li><code>*clean*</code> = contains “clean” anywhere</li>
-</ul>
-
-<form method="get" class="mb-3">
-    <div class="input-group">
-        <input type="text"
-               name="q"
-               value="@Model.Q"
-               class="form-control"
-               placeholder="Search datasets (use * for wildcard)" />
-
-        <button type="submit" class="btn btn-primary">Search</button>
-
-        <a asp-page="./Index" class="btn btn-secondary">Clear</a>
-
-        <a asp-page="./Create" class="btn btn-success">Create New</a>
+        @if (!isAuthed)
+        {
+            <div class="mt-4">
+                <a class="btn btn-light btn-lg me-2"
+                   asp-area="Identity" asp-page="/Account/Register">
+                    Get Started
+                </a>
+                <a class="btn btn-outline-light btn-lg"
+                   asp-area="Identity" asp-page="/Account/Login">
+                    Login
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="mt-4 d-flex gap-2 flex-wrap">
+                <a class="btn btn-light btn-lg" asp-page="/Dashboard">Dashboard</a>
+                <a class="btn btn-outline-light btn-lg" asp-page="/Datasets/Create">Create Dataset</a>
+            </div>
+        }
     </div>
-</form>
+</div>
 
-@if (!string.IsNullOrWhiteSpace(Model.Q))
-{
-    <p>
-        Showing results for: <strong>@Model.Q</strong>
-    </p>
-}
-
-@if (Model.Datasets.Count == 0)
-{
-    <div class="alert alert-warning">
-        No datasets found.
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-primary">Organize</h5>
+                <p class="card-text text-muted">
+                    Create datasets with clear names and descriptions so your data stays structured.
+                </p>
+            </div>
+        </div>
     </div>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Created</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var d in Model.Datasets)
-            {
-                <tr>
-                    <td>@d.Name</td>
-                    <td>@d.Description</td>
-                    <td>@d.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
-                    <td>
-                        <a class="btn btn-sm btn-outline-primary"
-                           href="/Datasets/Edit?id=@d.Id&q=@Model.Q">
-                            Edit
-                        </a>
 
-                        <a class="btn btn-sm btn-outline-danger"
-                           href="/Datasets/Delete?id=@d.Id&q=@Model.Q">
-                            Delete
-                        </a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-success">Search Fast</h5>
+                <p class="card-text text-muted">
+                    Use wildcard search like <code>roof*</code> or <code>*clean*</code> to find data instantly.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-dark">Secure</h5>
+                <p class="card-text text-muted">
+                    Authentication protects your data and keeps access restricted to authorized users.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

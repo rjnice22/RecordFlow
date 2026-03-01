@@ -1,4 +1,7 @@
-using analyticsweb.Data;
+﻿using analyticsweb.Data;
+
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,7 +31,35 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 
 builder.Services.AddRazorPages();
 
+builder.Services.AddRateLimiter(options =>
+{
+    // Return 429 automatically
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // A simple per-IP limiter: allow 10 requests per minute
+    options.AddPolicy("auth", httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ip,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            });
+    });
+});
+
+
+
+
 var app = builder.Build();
+
+
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -43,15 +74,36 @@ else
 }
 
 app.UseHttpsRedirection();
+app.Use(async (context, next) =>
+{
+    // Basic hardening headers
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+
+    // CSP: start strict-ish but not insane.
+    // If you use CDNs (Bootstrap, etc.), we’ll adjust.
+    context.Response.Headers["Content-Security-Policy"] =
+        "default-src 'self'; " +
+        "img-src 'self' data:; " +
+        "style-src 'self' 'unsafe-inline'; " +
+        "script-src 'self' 'unsafe-inline'; " +
+        "object-src 'none'; " +
+        "base-uri 'self'; " +
+        "frame-ancestors 'none';";
+
+    await next();
+});
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseRateLimiter(); // Apply rate limiting globally (you can also apply it to specific endpoints if
+
 
 app.UseAuthentication();   
 app.UseAuthorization();
 
-app.MapRazorPages();
-
+app.MapRazorPages().RequireRateLimiting("auth");
 
 // Seed an admin user at startup (create if missing; reset password if it already exists)
 using (var scope = app.Services.CreateScope())

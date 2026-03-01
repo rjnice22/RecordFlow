@@ -1,12 +1,153 @@
 ﻿@page
-@model SimpleAnalyticsWeb.Pages.DashboardModel
+@model analyticsweb.Pages.DashboardModel
 @{
     ViewData["Title"] = "Dashboard";
 }
 
-<h1>Dashboard</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="h3 mb-1">Dashboard</h1>
+        <div class="text-muted">A quick overview of your dataset activity.</div>
+    </div>
 
-<p>
-    This page is only accessible to authenticated users.
-    It will serve as the main hub for viewing and managing datasets.
-</p>
+    <a asp-page="/Datasets/Create" class="btn btn-success">+ Create Dataset</a>
+</div>
+
+<div class="alert alert-info">
+    <strong>What you’re seeing:</strong> These numbers summarize your datasets (total count, recent creation activity, and your latest datasets).
+    Use this page to quickly jump back into your work.
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Total Datasets</div>
+                <div class="display-6 fw-semibold">@Model.TotalDatasets</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Created (Last 7 Days)</div>
+                <div class="display-6 fw-semibold">@Model.DatasetsLast7Days</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Created (Last 30 Days)</div>
+                <div class="display-6 fw-semibold">@Model.DatasetsLast30Days</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Quick Actions</h2>
+
+                <div class="d-grid gap-2">
+                    <a class="btn btn-primary" asp-page="/Datasets/Index">View Datasets</a>
+                    <a class="btn btn-success" asp-page="/Datasets/Create">Create Dataset</a>
+                    <a class="btn btn-outline-secondary" asp-page="/Index">Home</a>
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="text-muted small">
+                    <strong>Search Tip:</strong> On the Datasets page you can search using wildcards:
+                    <div class="mt-2">
+                        <code>roof*</code> = starts with roof<br />
+                        <code>*clean*</code> = contains clean anywhere
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Most Recent Dataset</h2>
+
+                @if (Model.MostRecentDataset is null)
+                {
+                    <p class="text-muted mb-0">No datasets yet. Create one to start tracking!</p>
+                }
+                else
+                {
+                    <div class="mb-2 fw-semibold">@Model.MostRecentDataset.Name</div>
+                    <div class="text-muted small">
+                        Created: @Model.MostRecentDataset.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.MostRecentDataset.Description))
+                    {
+                        <div class="mt-2 text-muted">@Model.MostRecentDataset.Description</div>
+                    }
+
+                    <div class="mt-3">
+                        <a class="btn btn-outline-primary btn-sm"
+                           href="/Datasets/Edit?id=@Model.MostRecentDataset.Id">
+                            Open
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="p-3 d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Recent Datasets</h2>
+            <a asp-page="/Datasets/Index" class="btn btn-sm btn-outline-secondary">View all</a>
+        </div>
+
+        @if (Model.RecentDatasets.Count == 0)
+        {
+            <div class="p-3 text-muted">No datasets yet.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Name</th>
+                            <th>Created</th>
+                            <th class="text-end pe-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Model.RecentDatasets)
+                        {
+                            <tr>
+                                <td class="ps-3 fw-semibold">@d.Name</td>
+                                <td class="text-muted">@d.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                <td class="text-end pe-3">
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       href="/Datasets/Edit?id=@d.Id">
+                                        Edit
+                                    </a>
+                                    <a class="btn btn-sm btn-outline-danger ms-1"
+                                       href="/Datasets/Delete?id=@d.Id">
+                                        Delete
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
